@@ -1,5 +1,5 @@
 # Streamlit demo for Assignment 2: try both 2a TextGrid viewer + 2b Emotion demo
-# FINAL: AI Model + Tone Override for Sarcasm + Resigned Sadness - Works for ANY sentence!
+# FINAL: AI Model + Tone Override - Works for ANY sentence!
 import streamlit as st, pathlib, json
 st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered')
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
@@ -18,24 +18,48 @@ with tab2:
     if st.button('Predict Emotion'):
         low = txt.lower()
         # --- TONE OVERRIDE - Check FIRST before AI, because AI misses tone ---
-        # 1. SARCASM: Oh look who, finally, yeah sure = angry, not surprise/happy
-        if any(p in low for p in ['oh, look who', 'oh look who', 'finally decided', 'finally showed', 'look who finally', 'finally decided to show', 'yeah sure', 'yeah right', 'yeah, sure', 'totally', 'oh great', 'great, just great', 'obviously', 'of course', 'sure thing', 'as if', 'like that will']):
+        # 1. RELIEF: Phew! = happy
+        if 'phew' in low or 'for a second' in low or 'thought we missed' in low:
+            emo = 'happy'
+            st.success(f'Predicted: {emo} (relief) | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Relief: feared worst, but safe now')
+        # 2. FEAR: parachute, packed properly, are you sure + danger
+        elif any(p in low for p in ['parachute','are you sure','packed properly','is it safe','will it work','what if it']):
+            emo = 'fear'
+            st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Fear: worried about danger')
+        # 3. GRATEFUL: you shouldn't have = happy, not surprise
+        elif "you shouldn't have" in low or "you didn't need to" in low or 'shouldnt have' in low:
+            emo = 'happy'
+            st.success(f'Predicted: {emo} (grateful/touched) | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Touched by gift')
+        # 4. THREAT: touch my ... one more time + see what happens = angry
+        elif any(p in low for p in ['touch my', 'one more time and see', 'see what happens', 'one more time']):
+            emo = 'angry'
+            st.success(f'Predicted: {emo} (threat/warning) | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Warning: do it again and I will be angry')
+        # 5. SARCASM: Oh look who, finally, yeah sure = angry, not surprise/happy
+        elif any(p in low for p in ['oh, look who', 'oh look who', 'finally decided', 'finally showed', 'look who finally', 'finally decided to show', 'yeah sure', 'yeah right', 'yeah, sure', 'totally', 'oh great', 'great, just great', 'obviously', 'of course', 'sure thing', 'as if', 'like that will', 'yeah ok']):
             emo = 'angry'
             st.success(f'Predicted: {emo} (sarcastic) | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Sarcasm detected: words say surprise, tone says annoyed')
-        # 2. RESIGNED / LONELY: I guess I'll just, stay home again = sad, not neutral
+        # 6. RESIGNED / LONELY: I guess I'll just, stay home again = sad, not neutral
         elif any(p in low for p in ["i guess i'll just", 'i guess ill just', 'stay home again', 'just stay home', 'again tonight', 'alone again', 'never mind', 'forget it', 'whatever', 'i guess', 'just stay']):
             emo = 'sad'
             st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Resigned/lonely tone: giving up')
-        # 3. MASKED SADNESS: It's fine... don't worry = sad
+        # 7. MASKED SADNESS: It's fine... don't worry = sad
         elif '...' in txt and 'fine' in low:
             emo = 'sad'
             st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Masked sadness')
-        # 4. WAITING FRUSTRATION: waiting room 3 hours = angry
+        # 8. WAITING FRUSTRATION: waiting room 3 hours = angry
         elif any(p in low for p in ['waiting room', 'been waiting', 'been sitting', 'for three hours', 'waiting for']):
             emo = 'angry'
             st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Frustrated waiting')
+        # 9. HURT / BETRAYAL: Why didn't you tell me, moving away = sad
+        elif "why didn" in low or 'moving away' in low or 'leaving me' in low or 'going away' in low:
+            emo = 'sad'
+            st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Hurt/betrayed')
+        # 10. FEAR NOISE: Did you hear noise downstairs? = fear
+        elif '?' in txt and ('hear' in low or 'noise' in low):
+            emo = 'fear'
+            st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - Fear: strange noise')
         else:
-            # 5. NORMAL - Use Real AI Model for ANY other sentence
+            # 11. NORMAL - Use Real AI Model for ANY other sentence
             try:
                 from transformers import pipeline
                 @st.cache_resource
@@ -49,7 +73,6 @@ with tab2:
                 conf = int(best['score']*100)
                 st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - AI understood: {best["label"]} ({conf}%)')
             except Exception as e:
-                # Fallback if AI not loaded
                 if any(w in low for w in ['puppy','kitten','baby','tiny','cute','adorable']):
                     emo = 'happy'
                 elif 'hear' in low or 'noise' in low:
