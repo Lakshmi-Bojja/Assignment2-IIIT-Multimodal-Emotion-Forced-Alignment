@@ -19,10 +19,10 @@ with tab2:
         scores = {'happy': 0, 'sad': 0, 'angry': 0, 'fear': 0, 'surprise': 0, 'disgust': 0}
 
         happy = ['happy','joy','joyful','wonderful','love','loved','great','excited','excite','won','win','winning','championship','amazing','fantastic','awesome','celebrat','best day','beautiful','perfect','fun','laugh','smile','good news','proud','delight','cheer','glad','pleased','enjoy','brilliant','yay','congrats','congratulations','blessed','grateful','thankful','sweet','cute','adore','free']
-        sad = ['sad','cry','crying','tears','lonely','alone','lost','hurt','hurting','sorry','miss','missing','broke','broken','pain','tear','depress','hopeless','empty','bad day','heartbreak','heartbroken',"it's fine",'its fine',"i'm fine",'im fine',"don't worry",'dont worry','leave me','not really','moving away','going away','leaving me','leaving','left me',"didn't tell",'didnt tell','betray','betrayed','forgotten','ignored','abandon','goodbye','farewell','tired','exhausted','sick','ill','fail','failed','rejected','disappoint','disappointed','upset','down','blue','weep','lonely']
-        angry = ['angry','mad','furious','hate','hated','annoy','annoyed','frustrat','stupid','idiot','shut up','irritat','rage','outrage','unfair','cheat','cheated','lied','lie','liar','how could you','damn','hell','nonsense','ridiculous','sick of','fed up','annoying','rude','insult','disrespect']
+        sad = ['sad','cry','crying','tears','lonely','alone','lost','hurt','hurting','sorry','miss','missing','broke','broken','pain','tear','depress','hopeless','empty','bad day','heartbreak','heartbroken',"it's fine",'its fine',"i'm fine",'im fine',"don't worry",'dont worry','leave me','not really','moving away','going away','leaving me','leaving','left me',"didn't tell",'didnt tell','betray','betrayed','forgotten','ignored','abandon','goodbye','farewell','tired','exhausted','sick','ill','fail','failed','rejected','disappoint','disappointed','upset','down','blue','weep']
+        angry = ['angry','mad','furious','hate','hated','annoy','annoyed','frustrat','frustrated','stupid','idiot','shut up','irritat','rage','outrage','unfair','cheat','cheated','lied','lie','liar','how could you','damn','hell','nonsense','ridiculous','sick of','fed up','annoying','rude','insult','disrespect','waiting room','been waiting','been sitting','for three hours','waiting for','sitting in']
         fear = ['scared','afraid','fear','worried','worry','terrified','anxious','anxiety','nervous','panic','panicked','did you hear','hear that','noise downstairs','what was that','strange noise','creepy','haunted','dark','alone at night','danger','dangerous','help','scream','ghost','shadow','nightmare','threat','scary','fright','horror','unsafe','trembling','shaking']
-        surprise = ["can't believe",'cannot believe','unbelievable','wow','oh my','really?','seriously','shocking','unexpected','suddenly','omg','no way','what?!','incredible','unreal','astonish','amaze','surprise','surprised','shocked','did you hear','wait',"you're telling me",'you are telling me','completely free','is that true','are you serious','wait what','really']
+        surprise = ["can't believe",'cannot believe','unbelievable','wow','oh my','really?','seriously','shocking','unexpected','suddenly','omg','no way','what?!','incredible','unreal','astonish','amaze','surprise','surprised','shocked','did you hear',"you're telling me",'you are telling me','completely free','is that true','are you serious','wait—','wait,','wait!','wait?','wait what','really']
         disgust = ['gross','awful','yuck','disgust','disgusting','nasty','dirty','smell','smelly','vomit','sickening','filthy','rotten','stink','eww','horrible','terrible','pathetic']
 
         for w in happy:
@@ -38,7 +38,7 @@ with tab2:
         for w in disgust:
             if w in low: scores['disgust'] += 2
 
-        # --- SARCASM - Yeah sure, totally = angry, not happy ---
+        # --- SARCASM ---
         sarcasm_phrases = ['yeah sure','yeah right','yeah, sure','sure,','totally','oh great','great, just great','just great','obviously','of course','sure thing','like that will','as if','yeah ok']
         is_sarcasm = any(p in low for p in sarcasm_phrases)
         if is_sarcasm:
@@ -51,7 +51,12 @@ with tab2:
         if "can't believe" in low: scores['surprise'] += 3
         if '...' in txt: scores['sad'] += 2
         if '...' in txt and 'fine' in low: scores['sad'] += 3
-        if 'wait' in low and '?' in txt: scores['surprise'] += 4
+        # Wait = surprise ONLY if it is "Wait" at start, NOT "waiting room"
+        if low.strip().startswith('wait') and 'waiting' not in low and '?' in txt: scores['surprise'] += 4
+        # Waiting long time = angry/frustrated, NOT surprise
+        if 'waiting room' in low or 'been waiting' in low or 'been sitting' in low or 'for three hours' in low or 'waiting for' in low:
+            scores['angry'] += 4
+            scores['sad'] += 2
         if 'free' in low: scores['surprise'] += 2; scores['happy'] += 2
         if '!' in txt and max(scores.values()) > 0:
             top = max(scores, key=scores.get); scores[top] += 1
