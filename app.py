@@ -15,13 +15,22 @@ with tab2:
     st.write('Type a sentence - it will be classified by Speech (prosody proxy), Text, and Fusion logic in this demo.')
     txt = st.text_area('Type:', 'I am so happy today, this is wonderful!')
     if st.button('Predict Emotion'):
-        low=txt.lower()
-        if any(w in low for w in ['happy','wonderful','love','great','excited']): emo='happy'
-        elif any(w in low for w in ['angry','mad','furious','hate']): emo='angry'
-        elif any(w in low for w in ['sad','cry','lonely']): emo='sad'
-        elif any(w in low for w in ['scared','afraid','fear']): emo='fear'
-        elif any(w in low for w in ['gross','awful','yuck']): emo='disgust'
-        elif any(w in low for w in ['wow','amazing','surprise']): emo='surprise'
-        else: emo='neutral'
+        low = txt.lower()
+        if any(w in low for w in ["can't believe", "cannot believe", "unbelievable", "wow", "oh my"]):
+            emo = 'surprise'
+        elif any(w in low for w in ['happy','wonderful','love','great','excited','won','win','championship','amazing','fantastic','awesome','celebrat','wonderful']):
+            emo = 'happy'
+        elif any(w in low for w in ['angry','mad','furious','hate','annoy','frustrat']):
+            emo = 'angry'
+        elif any(w in low for w in ['sad','cry','lonely','lost','hurt','sorry']):
+            emo = 'sad'
+        elif any(w in low for w in ['scared','afraid','fear','worried','terrified']):
+            emo = 'fear'
+        elif any(w in low for w in ['gross','awful','yuck','disgust']):
+            emo = 'disgust'
+        elif any(w in low for w in ['amazing','surprise']):
+            emo = 'surprise'
+        else:
+            emo = 'neutral'
         st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident')
         st.write('See Results/accuracy_tables.md for full comparison.')
