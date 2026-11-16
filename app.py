@@ -18,11 +18,11 @@ with tab2:
         low = txt.lower()
         if any(w in low for w in ["can't believe", "cannot believe", "unbelievable", "wow", "oh my"]):
             emo = 'surprise'
-        elif any(w in low for w in ['happy','wonderful','love','great','excited','won','win','championship','amazing','fantastic','awesome','celebrat','wonderful']):
+        elif any(w in low for w in ['happy','wonderful','love','great','excited','won','win','championship','amazing','fantastic','awesome','celebrat']):
             emo = 'happy'
         elif any(w in low for w in ['angry','mad','furious','hate','annoy','frustrat']):
             emo = 'angry'
-        elif any(w in low for w in ['sad','cry','lonely','lost','hurt','sorry']):
+        elif any(w in low for w in ['sad','cry','lonely','lost','hurt','sorry',"it's fine",'its fine',"i'm fine",'im fine',"don't worry",'dont worry',"don't worry about me",'leave me alone','not really']):
             emo = 'sad'
         elif any(w in low for w in ['scared','afraid','fear','worried','terrified']):
             emo = 'fear'
