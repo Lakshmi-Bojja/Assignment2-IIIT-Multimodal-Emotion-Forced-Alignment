@@ -1,0 +1,13 @@
+{
+  "model": "speech-only",
+  "accuracy": 0.8767857142857143,
+  "classes": [
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "neutral",
+    "sad",
+    "surprise"
+  ]
+}

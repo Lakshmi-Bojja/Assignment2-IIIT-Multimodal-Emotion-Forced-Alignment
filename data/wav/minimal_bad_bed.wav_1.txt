@@ -1,0 +1,1 @@
+Place provided minimal_bad_bed.wav here (from assignment wav/ folder). Simulate mode does not need real wav.
