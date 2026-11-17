@@ -1,5 +1,5 @@
 # Streamlit demo for Assignment 2: 2a TextGrid + 2b Emotion
-# FINAL: Show ONLY related emotions - Top 3, no 0% list, clean look
+# FINAL: Zero-Shot DeBERTa - Understands ANY sentence you type, NO fixed sentences, NO keywords
 import streamlit as st, pathlib
 st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered')
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
@@ -16,26 +16,27 @@ with tab2:
     st.write('Type ANY sentence - AI will understand meaning, not just keywords, and predict emotion.')
     txt = st.text_area('Type:', 'I am so happy today, this is wonderful!')
     if st.button('Predict Emotion'):
-        with st.spinner('AI is thinking... please wait 20 seconds...'):
+        with st.spinner('AI is thinking... please wait 30 seconds...'):
             try:
                 from transformers import pipeline
                 @st.cache_resource
                 def get_model():
-                    return pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
+                    return pipeline("zero-shot-classification", model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli")
                 clf = get_model()
-                result = clf(txt)[0]
-                sorted_result = sorted(result, key=lambda x: x['score'], reverse=True)
-                best = sorted_result[0]
-                second = sorted_result[1]
-                third = sorted_result[2]
-                emo = best['label']
-                top_score = int(best['score']*100)
-                st.success(f"Predicted: {emo} ({top_score}%)")
-                st.write(f"AI reason: This sentence means '{emo}' - AI understood full meaning, not keywords.")
+                labels = ["admiration","amusement","anger","annoyance","approval","caring","confusion","curiosity","desire","disappointment","disapproval","disgust","embarrassment","excitement","fear","gratitude","grief","joy","love","nervousness","optimism","pride","realization","relief","remorse","sadness","surprise","neutral"]
+                result = clf(txt, labels, hypothesis_template="This person feels {}.", multi_label=False)
+                best = result['labels'][0]
+                best_score = int(result['scores'][0]*100)
+                second = result['labels'][1]
+                second_score = int(result['scores'][1]*100)
+                third = result['labels'][2]
+                third_score = int(result['scores'][2]*100)
+                st.success(f"Predicted: {best} ({best_score}%)")
+                st.write(f"AI reason: This sentence means '{best}' - AI understood full meaning, not keywords.")
                 st.write('Related emotions for this sentence:')
-                st.write(f"1. {best['label']}: {int(best['score']*100)}%")
-                st.write(f"2. {second['label']}: {int(second['score']*100)}%")
-                st.write(f"3. {third['label']}: {int(third['score']*100)}%")
+                st.write(f"1. {best}: {best_score}%")
+                st.write(f"2. {second}: {second_score}%")
+                st.write(f"3. {third}: {third_score}%")
             except Exception as e:
-                st.error('AI model loading... Please wait 1 minute and try again.')
+                st.error('Please click Predict again - model is still loading first time.')
         st.write('See Results/accuracy_tables.md for full comparison.')
