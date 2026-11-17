@@ -1,5 +1,5 @@
 # Streamlit demo for Assignment 2: 2a TextGrid + 2b Emotion
-# FINAL CORRECT METHOD: Zero-Shot AI with ONLY 7 clean labels - No keywords, no confusing labels!
+# FINAL: GoEmotions AI Model - Trained ONLY for emotions, understands body feelings!
 import streamlit as st, pathlib
 st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered')
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
@@ -20,15 +20,14 @@ with tab2:
             from transformers import pipeline
             @st.cache_resource
             def get_model():
-                return pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+                return pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
             clf = get_model()
-            # ONLY 7 clean labels - NO threatening, NO curious, NO sarcastic, NO embarrassed
-            # Those extra labels were confusing AI and making wrong predictions!
-            labels = ["happy", "sad", "angry", "fear", "surprise", "disgust", "neutral"]
-            result = clf(txt, labels, multi_label=False)
-            top_label = result['labels'][0]
-            top_score = int(result['scores'][0]*100)
-            emo = top_label
+            result = clf(txt)[0]
+            best = max(result, key=lambda x: x['score'])
+            mapping = {'joy':'happy','love':'happy','admiration':'happy','amusement':'happy','approval':'happy','caring':'happy','desire':'happy','excitement':'happy','gratitude':'happy','optimism':'happy','pride':'happy','relief':'happy','sadness':'sad','grief':'sad','remorse':'sad','disappointment':'sad','anger':'angry','annoyance':'angry','disapproval':'angry','fear':'fear','nervousness':'fear','anxiety':'fear','surprise':'surprise','realization':'surprise','curiosity':'surprise','confusion':'surprise','disgust':'disgust','embarrassment':'fear','neutral':'neutral'}
+            top_label = best['label']
+            emo = mapping.get(top_label, top_label)
+            top_score = int(best['score']*100)
             st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - AI understood: {top_label} ({top_score}%)')
             st.write(f'AI reason: This sentence means "{top_label}" - AI understood full meaning, not keywords.')
         except Exception as e:
