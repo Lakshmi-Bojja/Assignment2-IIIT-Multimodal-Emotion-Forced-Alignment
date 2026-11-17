@@ -1,5 +1,5 @@
 # Streamlit demo for Assignment 2: 2a TextGrid + 2b Emotion
-# FINAL: Lightweight Zero-Shot + ALL 28 emotions - works on Streamlit Free, understands hidden meaning
+# FINAL: Correct Small Zero-Shot + ALL 28 emotions - works, understands hidden meaning
 import streamlit as st, pathlib
 st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered')
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
@@ -22,7 +22,7 @@ with tab2:
                 from transformers import pipeline
                 @st.cache_resource
                 def get_model():
-                    return pipeline("zero-shot-classification", model="MoritzLaurer/deberta-v3-xsmall-mnli")
+                    return pipeline("zero-shot-classification", model="typeform/distilbert-base-uncased-mnli")
                 clf = get_model()
                 labels = ["admiration","amusement","anger","annoyance","approval","caring","confusion","curiosity","desire","disappointment","disapproval","disgust","embarrassment","excitement","fear","gratitude","grief","joy","love","nervousness","optimism","pride","realization","relief","remorse","sadness","surprise","neutral"]
                 result = clf(txt, labels, hypothesis_template="This person feels {}.", multi_label=False)
