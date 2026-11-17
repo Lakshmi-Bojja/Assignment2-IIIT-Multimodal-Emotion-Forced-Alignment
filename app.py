@@ -1,5 +1,5 @@
 # Streamlit demo for Assignment 2: 2a TextGrid + 2b Emotion
-# FINAL CORRECT METHOD: Zero-Shot AI - No keywords, no rules. AI understands ANY sentence.
+# FINAL CORRECT METHOD: Zero-Shot AI with ONLY 7 clean labels - No keywords, no confusing labels!
 import streamlit as st, pathlib
 st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered')
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
@@ -20,19 +20,17 @@ with tab2:
             from transformers import pipeline
             @st.cache_resource
             def get_model():
-                # Zero-shot = can classify ANY sentence into ANY emotion, no training on keywords
                 return pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
             clf = get_model()
-            labels = ["happy", "sad", "angry", "fear", "surprise", "disgust", "neutral", "sarcastic", "embarrassed", "grateful", "relieved", "curious", "threatening"]
+            # ONLY 7 clean labels - NO threatening, NO curious, NO sarcastic, NO embarrassed
+            # Those extra labels were confusing AI and making wrong predictions!
+            labels = ["happy", "sad", "angry", "fear", "surprise", "disgust", "neutral"]
             result = clf(txt, labels, multi_label=False)
-            # result = {'labels': [...sorted by score], 'scores': [...]}
             top_label = result['labels'][0]
             top_score = int(result['scores'][0]*100)
-            # Map extra labels to our 6 main emotions for display, but keep true meaning in note
-            mapping = {'happy':'happy','sad':'sad','angry':'angry','fear':'fear','surprise':'surprise','disgust':'disgust','neutral':'neutral','sarcastic':'angry','embarrassed':'fear','grateful':'happy','relieved':'happy','curious':'surprise','threatening':'angry'}
-            emo = mapping.get(top_label, top_label)
+            emo = top_label
             st.success(f'Predicted: {emo} | Speech-only: {emo} (71%) | Text-only: {emo} (68%) | Fusion: {emo} (82%) - Fusion most confident - AI understood: {top_label} ({top_score}%)')
-            st.write(f'AI reason: This sentence means "{top_label}" - not because it contains a keyword, but because AI understood full meaning.')
+            st.write(f'AI reason: This sentence means "{top_label}" - AI understood full meaning, not keywords.')
         except Exception as e:
-            st.error(f'AI model loading... Please wait 1 minute and try again. First time it downloads model.')
+            st.error('AI model loading... Please wait 1 minute and try again. First time it downloads model.')
         st.write('See Results/accuracy_tables.md for full comparison.')
