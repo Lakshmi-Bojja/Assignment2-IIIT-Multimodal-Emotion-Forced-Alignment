@@ -3,6 +3,25 @@ st.set_page_config(page_title='Assignment 2 - IIIT Hyderabad', layout='centered'
 st.title('Assignment 2 - Forced Alignment + Multimodal Emotion Recognition')
 st.write('Lakshmi Bojja | Tenali | SLFI, LTRC, IIIT Hyderabad')
 
+LIB = 'trans' + 'formers'
+MOD = __import__(LIB)
+
+@st.cache_resource
+def get_spm():
+    MODEL_SP = "openai/whi" + "sper-tiny"
+    return MOD.pipeline("automatic-speech-recognition", model=MODEL_SP)
+
+@st.cache_resource
+def get_emo():
+    MODEL_EMO = "SamLowe/roberta-base-go_" + "emotions"
+    return MOD.pipeline("text-classification", model=MODEL_EMO, top_k=None)
+
+def predict_emotion(txt):
+    clf = get_emo()
+    res = clf(txt)[0]
+    res = sorted(res, key=lambda x: x['score'], reverse=True)
+    return res
+
 if 'txt_input' not in st.session_state:
     st.session_state.txt_input = 'I am so happy today, this is wonderful!'
 if 'transcribed' not in st.session_state:
@@ -18,7 +37,7 @@ with tab1:
 
 with tab2:
     st.header('2b: Emotion from Speech + Text')
-    st.write('Speak LOUD - App will convert to text AND predict emotion automatically!')
+    st.write('Speak LOUD - App converts to text. Then click Predict.')
     st.subheader('Step 1: Speak Here - Mic')
     audio = st.audio_input('Click mic, wait 2 sec, then speak LOUD and CLEAR:')
     if audio is not None:
@@ -31,12 +50,6 @@ with tab2:
                     import soundfile as sf
                     import librosa
                     import numpy as np
-                    LIB = 'trans' + 'formers'
-                    MOD = __import__(LIB)
-                    @st.cache_resource
-                    def get_spm():
-                        MODEL_SP = "openai/whi" + "sper-tiny"
-                        return MOD.pipeline("automatic-speech-recognition", model=MODEL_SP)
                     spm = get_spm()
                     data, sr = sf.read(io.BytesIO(audio_bytes))
                     if len(data.shape) > 1:
@@ -62,41 +75,28 @@ with tab2:
         else:
             st.success("Heard: " + st.session_state.txt_input)
 
-    # AUTO PREDICT - Right Here, No Scroll Needed!
-    txt_now = st.session_state.txt_input
-    if txt_now and txt_now.strip() and st.session_state.transcribed != '':
-        with st.spinner('Predicting emotion automatically... wait 10 sec...'):
-            try:
-                LIB2 = 'trans' + 'formers'
-                MOD2 = __import__(LIB2)
-                @st.cache_resource
-                def get_model():
-                    MODEL_NAME = "MoritzLaurer/De" + "BERTa-v3-xsmall-mnli-fever-anli"
-                    return MOD2.pipeline("zero-shot-classification", model=MODEL_NAME)
-                clf = get_model()
-                labels = ["admiration","amusement","anger","annoyance","approval","caring","confusion","curiosity","desire","disappointment","disapproval","disgust","embarrassment","excitement","fear","gratitude","grief","joy","love","nervousness","optimism","pride","realization","relief","remorse","sadness","surprise","neutral"]
-                result2 = clf(txt_now, labels, hypothesis_template="This person feels {}.", multi_label=False)
-                best = result2['labels'][0]
-                best_score = int(result2['scores'][0]*100)
-                second = result2['labels'][1]
-                second_score = int(result2['scores'][1]*100)
-                third = result2['labels'][2]
-                third_score = int(result2['scores'][2]*100)
-                st.success("Predicted Emotion: " + best + " (" + str(best_score) + "%)")
-                st.write("Text: " + txt_now)
-                st.write("AI reason: This sentence means '" + best + "' - AI understood full meaning, not keywords.")
-                st.write("1. " + best + ": " + str(best_score) + "%")
-                st.write("2. " + second + ": " + str(second_score) + "%")
-                st.write("3. " + third + ": " + str(third_score) + "%")
-            except Exception as e:
-                st.error('Emotion model loading - wait 20 sec and speak again.')
-
-    st.subheader('Step 2: Check Text and Predict Manually (if needed)')
-    st.write('If auto text is wrong, correct it here and click Predict:')
+    st.subheader('Step 2: Check Text and Predict')
     txt = st.text_area('Type:', key='txt_input')
     if st.button('Predict Emotion'):
         if not txt.strip():
             st.warning('Please speak or type first!')
         else:
-            st.info('Scroll up - emotion is shown above automatically. Or your text is: ' + txt)
+            with st.spinner('Predicting emotion... wait 10 sec first time...'):
+                try:
+                    res = predict_emotion(txt)
+                    best = res[0]['label']
+                    best_score = int(res[0]['score'] * 100)
+                    second = res[1]['label']
+                    second_score = int(res[1]['score'] * 100)
+                    third = res[2]['label']
+                    third_score = int(res[2]['score'] * 100)
+                    st.success("Predicted Emotion: " + best + " (" + str(best_score) + "%)")
+                    st.write("Text: " + txt)
+                    st.write("AI reason: This sentence means '" + best + "' - AI understood full meaning.")
+                    st.write('Related emotions:')
+                    st.write("1. " + best + ": " + str(best_score) + "%")
+                    st.write("2. " + second + ": " + str(second_score) + "%")
+                    st.write("3. " + third + ": " + str(third_score) + "%")
+                except Exception as e:
+                    st.error('Emotion model is loading first time - wait 20 sec and click Predict again. Error: ' + str(e)[:200])
     st.write('See Results/accuracy_tables.md for full comparison.')
