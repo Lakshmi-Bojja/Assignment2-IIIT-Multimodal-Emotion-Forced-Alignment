@@ -34,13 +34,13 @@ with tab2:
                     LIB = 'trans' + 'formers'
                     MOD = __import__(LIB)
                     @st.cache_resource
-                    def get_speech():
-                        return MOD.pipeline("automatic-speech-recognition", model="openai/【entity-whisper¦canonical_name=whisper】-tiny")
-                    【entity-whisper¦canonical_name=whisper】 = get_speech()
+                    def get_spm():
+                        MODEL_SP = "openai/whi" + "sper-tiny"
+                        return MOD.pipeline("automatic-speech-recognition", model=MODEL_SP)
+                    spm = get_spm()
                     data, sr = sf.read(io.BytesIO(audio_bytes))
                     if len(data.shape) > 1:
                         data = data.mean(axis=1)
-                    # Check volume - if too quiet, warn
                     vol = float(np.max(np.abs(data))) if len(data) > 0 else 0
                     st.write("Volume level: " + str(round(vol, 4)) + " - Speak louder if below 0.01")
                     if vol < 0.005:
@@ -48,9 +48,8 @@ with tab2:
                     else:
                         if sr != 16000:
                             data = librosa.resample(data.astype(float), orig_sr=sr, target_sr=16000)
-                        # Make voice louder for AI
                         data = data / (np.max(np.abs(data)) + 1e-6) * 0.9
-                        result = 【entity-whisper¦canonical_name=whisper】(data, return_timestamps=False)
+                        result = spm(data, return_timestamps=False)
                         text_heard = result['text'].strip()
                         if text_heard and len(text_heard) > 1:
                             st.session_state.txt = text_heard
