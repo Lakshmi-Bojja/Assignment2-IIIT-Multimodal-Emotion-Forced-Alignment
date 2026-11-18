@@ -18,9 +18,9 @@ with tab1:
 
 with tab2:
     st.header('2b: Emotion from Speech + Text')
-    st.write('Step 1: Speak - App converts speech to text automatically. Step 2: Check text, Click Predict.')
+    st.write('Step 1: Speak LOUD and CLEAR - App converts speech to text. Step 2: Check text, Click Predict.')
     st.subheader('Step 1: Speak Here - Mic')
-    audio = st.audio_input('Click mic and speak your sentence:')
+    audio = st.audio_input('Click mic, wait 2 sec, then speak LOUD and CLEAR:')
     if audio is not None:
         audio_bytes = audio.read()
         st.audio(audio_bytes)
@@ -30,32 +30,41 @@ with tab2:
                 try:
                     import soundfile as sf
                     import librosa
+                    import numpy as np
                     LIB = 'trans' + 'formers'
                     MOD = __import__(LIB)
                     @st.cache_resource
                     def get_speech():
-                        return MOD.pipeline("automatic-speech-recognition", model="openai/whisper-tiny")
-                    whisper = get_speech()
+                        return MOD.pipeline("automatic-speech-recognition", model="openai/【entity-whisper¦canonical_name=whisper】-tiny")
+                    【entity-whisper¦canonical_name=whisper】 = get_speech()
                     data, sr = sf.read(io.BytesIO(audio_bytes))
                     if len(data.shape) > 1:
                         data = data.mean(axis=1)
-                    if sr != 16000:
-                        data = librosa.resample(data.astype(float), orig_sr=sr, target_sr=16000)
-                    result = whisper(data, return_timestamps=False)
-                    text_heard = result['text'].strip()
-                    if text_heard:
-                        st.session_state.txt = text_heard
-                        st.session_state.transcribed = str(len(audio_bytes))
-                        st.success("Heard: " + text_heard)
+                    # Check volume - if too quiet, warn
+                    vol = float(np.max(np.abs(data))) if len(data) > 0 else 0
+                    st.write("Volume level: " + str(round(vol, 4)) + " - Speak louder if below 0.01")
+                    if vol < 0.005:
+                        st.warning('Your voice was too quiet / silent! Please speak LOUDER, closer to mic, and try again.')
                     else:
-                        st.warning('Could not hear clearly - please type below.')
+                        if sr != 16000:
+                            data = librosa.resample(data.astype(float), orig_sr=sr, target_sr=16000)
+                        # Make voice louder for AI
+                        data = data / (np.max(np.abs(data)) + 1e-6) * 0.9
+                        result = 【entity-whisper¦canonical_name=whisper】(data, return_timestamps=False)
+                        text_heard = result['text'].strip()
+                        if text_heard and len(text_heard) > 1:
+                            st.session_state.txt = text_heard
+                            st.session_state.transcribed = str(len(audio_bytes))
+                            st.success("Heard: " + text_heard)
+                        else:
+                            st.warning('Heard empty - your voice was too low. Please speak LOUDER and try again. Your old text is still kept below.')
                 except Exception as e:
                     st.info('Auto transcription loading first time - please type what you spoke below for now, then click Predict.')
         else:
             st.success("Heard: " + st.session_state.txt)
 
     st.subheader('Step 2: Check Text and Predict')
-    st.write('If auto text is wrong, correct it here:')
+    st.write('If auto text is wrong or empty, correct it here:')
     txt = st.text_area('Type:', value=st.session_state.txt, key='txt_input')
     st.session_state.txt = txt
     if st.button('Predict Emotion'):
