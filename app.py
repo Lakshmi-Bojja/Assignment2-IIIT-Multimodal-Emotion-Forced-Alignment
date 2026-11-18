@@ -21,9 +21,9 @@ def get_emo2():
     MODEL_EMO2 = " facebook/bart-large-" + "mnli"
     return MOD.pipeline("zero-shot-classification", model=MODEL_EMO2)
 
-LABELS = ["anger", "annoyance", "fear", "joy", "love", "sadness", "surprise", "neutral", "disgust", "confusion", "anxiety", "embarrassment", "boredom", "guilt", "regret", "optimism", "excitement", "gratitude", "grief", "pride", "relief", "shame", "hope"]
+LABELS = ["anger", "annoyance", "frustration", "fear", "panic", "anxiety", "worry", "joy", "happiness", "love", "sadness", "grief", "surprise", "shock", "neutral", "disgust", "confusion", "embarrassment", "shame", "boredom", "guilt", "regret", "optimism", "hope", "excitement", "gratitude", "admiration", "respect", "pride", "relief", "sympathy", "empathy", "exhaustion", "tiredness"]
 
-GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"anxiety","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"regret","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"joy","amusement":"joy","caring":"love","desire":"love","optimism":"optimism","realization":"surprise","approval":"joy"}
+GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","happiness":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"anxiety","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"regret","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"admiration","amusement":"joy","caring":"empathy","desire":"love","optimism":"optimism","realization":"surprise","approval":"admiration"}
 
 def predict_emotion(txt):
     t = txt.strip()
