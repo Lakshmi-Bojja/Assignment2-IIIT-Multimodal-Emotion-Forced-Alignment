@@ -13,7 +13,7 @@ def get_spm():
 
 @st.cache_resource
 def get_emo():
-    MODEL_EMO = "SamLowe/roberta-base-go_" + "emotions"
+    MODEL_EMO = "j-hartmann/emotion-english-distilroberta-" + "base"
     return MOD.pipeline("text-classification", model=MODEL_EMO, top_k=None)
 
 def predict_emotion(txt):
@@ -92,7 +92,7 @@ with tab2:
                     third_score = int(res[2]['score'] * 100)
                     st.success("Predicted Emotion: " + best + " (" + str(best_score) + "%)")
                     st.write("Text: " + txt)
-                    st.write("AI reason: This sentence means '" + best + "' - AI understood full meaning.")
+                    st.write("AI reason: This sentence means '" + best + "' - AI understood full feeling.")
                     st.write('Related emotions:')
                     st.write("1. " + best + ": " + str(best_score) + "%")
                     st.write("2. " + second + ": " + str(second_score) + "%")
