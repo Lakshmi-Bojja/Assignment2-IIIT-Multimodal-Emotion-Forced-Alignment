@@ -12,60 +12,40 @@ def get_spm():
     return MOD.pipeline("automatic-speech-recognition", model=MODEL_SP)
 
 @st.cache_resource
-def get_emo1():
-    MODEL_EMO1 = "j-hartmann/emotion-english-distilroberta-" + "base"
-    return MOD.pipeline("text-classification", model=MODEL_EMO1, top_k=None)
+def get_emo_go():
+    # Model with 28 feelings incl embarrassment, annoyance, boredom, grief
+    MODEL_GO = "SamLowe/roberta-base-go_" + "emotions"
+    return MOD.pipeline("text-classification", model=MODEL_GO, top_k=None)
 
 @st.cache_resource
 def get_emo2():
     MODEL_EMO2 = " facebook/bart-large-" + "mnli"
     return MOD.pipeline("zero-shot-classification", model=MODEL_EMO2)
 
-LABELS = ["anger", "fear", "joy", "love", "sadness", "surprise", "neutral", "disgust", "confusion", "anxiety", "embarrassment", "guilt"]
+LABELS = ["anger", "annoyance", "fear", "joy", "love", "sadness", "surprise", "neutral", "disgust", "confusion", "anxiety", "embarrassment", "boredom", "guilt", "excitement", "gratitude", "grief", "pride", "relief", "shame"]
+
+# Map GoEmotions labels to our display labels
+GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"anxiety","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"guilt","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"joy","amusement":"joy","caring":"love","desire":"love","optimism":"joy","realization":"surprise","approval":"joy"}
 
 def predict_emotion(txt):
     t = txt.strip()
-    low = t.lower()
     scores = {k: 0.0 for k in LABELS}
+    # Model 1 - GoEmotions - understands embarrassment, boredom, annoyance
+    try:
+        r1 = get_emo_go()(t)[0]
+        for x in r1:
+            lab = GO_MAP.get(x['label'].lower(), None)
+            if lab in scores:
+                scores[lab] += float(x['score']) * 2.0
+    except Exception:
+        pass
+    # Model 2 - Zero-Shot - understands full meaning
     try:
         r2 = get_emo2()(t, LABELS, hypothesis_template="The emotion expressed in this sentence is {}.")
         for lab, sc in zip(r2['labels'], r2['scores']):
-            scores[lab.lower()] += float(sc) * 3.0
+            scores[lab.lower()] += float(sc) * 2.0
     except Exception:
         pass
-    try:
-        r1 = get_emo1()(t)[0]
-        for x in r1:
-            lab = x['label'].lower()
-            if lab in scores:
-                scores[lab] += float(x['score']) * 0.5
-    except Exception:
-        pass
-    feeling_words = ["happy","sad","angry","fear","scared","afraid","love","hate","worried","excited","nervous","hurt","pain","cry","laugh","smile","sorry","guilt","ashamed","surprised","shocked","amazing","wonderful","terrible","awful","broken","leave","left","lost","lose","mess","serious","again","smell","stink","win","won","mean"]
-    has_feeling = any(w in low for w in feeling_words)
-    is_question = t.endswith("?")
-    is_fact = (not has_feeling) and ("i " not in low and "my " not in low and "me" not in low and "am " not in low and "feel" not in low)
-    if is_fact and not is_question:
-        scores["neutral"] += 1.5
-    if is_question and has_feeling:
-        scores["neutral"] = scores["neutral"] * 0.2
-    if "smell" in low or "stink" in low or "stinks" in low or "bad smell" in low:
-        scores["disgust"] += 2.0
-        scores["neutral"] = scores["neutral"] * 0.2
-    if "love" in low:
-        scores["love"] += 2.0
-        scores["joy"] = scores["joy"] * 0.5
-    if "what does" in low or "what is this" in low or "don't understand" in low or "dont understand" in low or "what do you mean" in low:
-        scores["confusion"] += 2.0
-        scores["surprise"] = scores["surprise"] * 0.4
-        scores["neutral"] = scores["neutral"] * 0.3
-    if "leave me" in low or "left me" in low or "leaving me" in low:
-        scores["sadness"] += 2.0
-        scores["anger"] = scores["anger"] * 0.4
-    if "lose my" in low or "lost my" in low or "lost" in low and "wallet" in low:
-        scores["fear"] += 2.0
-        scores["anxiety"] += 1.5
-        scores["neutral"] = scores["neutral"] * 0.2
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     total = sum([v for _, v in ranked]) + 1e-6
     out = []
