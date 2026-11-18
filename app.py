@@ -12,38 +12,19 @@ def get_spm():
     return MOD.pipeline("automatic-speech-recognition", model=MODEL_SP)
 
 @st.cache_resource
-def get_emo_go():
-    MODEL_GO = "SamLowe/roberta-base-go_" + "emotions"
-    return MOD.pipeline("text-classification", model=MODEL_GO, top_k=None)
+def get_emo():
+    # STRONG model - understands hidden / indirect / polite feelings
+    MODEL_EMO = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-" + "wanli"
+    return MOD.pipeline("zero-shot-classification", model=MODEL_EMO)
 
-@st.cache_resource
-def get_emo2():
-    MODEL_EMO2 = " facebook/bart-large-" + "mnli"
-    return MOD.pipeline("zero-shot-classification", model=MODEL_EMO2)
-
-LABELS = ["anger", "annoyance", "frustration", "fear", "panic", "anxiety", "nervousness", "worry", "joy", "happiness", "love", "sadness", "grief", "surprise", "shock", "neutral", "disgust", "confusion", "embarrassment", "shame", "boredom", "guilt", "regret", "optimism", "hope", "excitement", "playfulness", "teasing", "challenge", "gratitude", "admiration", "respect", "pride", "relief", "sympathy", "empathy", "exhaustion", "tiredness", "peace", "calm", "contentment", "relaxation"]
-
-GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","happiness":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"nervousness","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"regret","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"admiration","amusement":"playfulness","caring":"empathy","desire":"love","optimism":"optimism","realization":"surprise","approval":"admiration"}
+LABELS = ["anger", "annoyance", "frustration", "irritation", "fear", "panic", "anxiety", "nervousness", "worry", "joy", "happiness", "love", "sadness", "grief", "surprise", "shock", "neutral", "disgust", "confusion", "embarrassment", "shame", "boredom", "guilt", "regret", "optimism", "hope", "excitement", "playfulness", "gratitude", "admiration", "respect", "pride", "relief", "sympathy", "empathy", "exhaustion", "tiredness", "peace", "calm", "contentment"]
 
 def predict_emotion(txt):
     t = txt.strip()
-    scores = {k: 0.0 for k in LABELS}
-    try:
-        r1 = get_emo_go()(t)[0]
-        for x in r1:
-            lab = GO_MAP.get(x['label'].lower(), None)
-            if lab in scores:
-                scores[lab] += float(x['score']) * 2.0
-    except Exception:
-        pass
-    try:
-        r2 = get_emo2()(t, LABELS, hypothesis_template="The emotion expressed is {}.")
-        for lab, sc in zip(r2['labels'], r2['scores']):
-            scores[lab.lower()] += float(sc) * 2.0
-    except Exception:
-        pass
-    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    total = sum([v for _, v in ranked]) + 1e-6
+    clf = get_emo()
+    r = clf(t, LABELS, hypothesis_template="This person is feeling {}.", multi_label=False)
+    ranked = list(zip(r['labels'], r['scores']))
+    total = sum([s for _, s in ranked]) + 1e-6
     out = []
     for lab, sc in ranked:
         pct = int((sc / total) * 100)
@@ -114,7 +95,7 @@ with tab2:
         if not txt.strip():
             st.warning('Please speak or type first!')
         else:
-            with st.spinner('Predicting emotion... wait 30 sec first time...'):
+            with st.spinner('Predicting emotion... wait 40 sec first time - strong model loading...'):
                 try:
                     res = predict_emotion(txt)
                     best = res[0]['label']
@@ -130,5 +111,5 @@ with tab2:
                     st.write("2. " + second + ": " + str(second_score) + "%")
                     st.write("3. " + third + ": " + str(third_score) + "%")
                 except Exception as e:
-                    st.error('Models loading first time - wait 30 sec and click Predict again. Error: ' + str(e)[:200])
+                    st.error('Models loading first time - wait 40 sec and click Predict again. Error: ' + str(e)[:200])
     st.write('See Results/accuracy_tables.md for full comparison.')
