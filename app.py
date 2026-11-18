@@ -13,7 +13,6 @@ def get_spm():
 
 @st.cache_resource
 def get_emo_go():
-    # Model with 28 feelings incl embarrassment, annoyance, boredom, grief
     MODEL_GO = "SamLowe/roberta-base-go_" + "emotions"
     return MOD.pipeline("text-classification", model=MODEL_GO, top_k=None)
 
@@ -22,15 +21,13 @@ def get_emo2():
     MODEL_EMO2 = " facebook/bart-large-" + "mnli"
     return MOD.pipeline("zero-shot-classification", model=MODEL_EMO2)
 
-LABELS = ["anger", "annoyance", "fear", "joy", "love", "sadness", "surprise", "neutral", "disgust", "confusion", "anxiety", "embarrassment", "boredom", "guilt", "excitement", "gratitude", "grief", "pride", "relief", "shame"]
+LABELS = ["anger", "annoyance", "fear", "joy", "love", "sadness", "surprise", "neutral", "disgust", "confusion", "anxiety", "embarrassment", "boredom", "guilt", "regret", "optimism", "excitement", "gratitude", "grief", "pride", "relief", "shame", "hope"]
 
-# Map GoEmotions labels to our display labels
-GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"anxiety","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"guilt","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"joy","amusement":"joy","caring":"love","desire":"love","optimism":"joy","realization":"surprise","approval":"joy"}
+GO_MAP = {"anger":"anger","annoyance":"annoyance","fear":"fear","joy":"joy","love":"love","sadness":"sadness","surprise":"surprise","neutral":"neutral","disgust":"disgust","confusion":"confusion","embarrassment":"embarrassment","nervousness":"anxiety","excitement":"excitement","gratitude":"gratitude","grief":"grief","pride":"pride","relief":"relief","remorse":"regret","disappointment":"sadness","disapproval":"anger","curiosity":"confusion","admiration":"joy","amusement":"joy","caring":"love","desire":"love","optimism":"optimism","realization":"surprise","approval":"joy"}
 
 def predict_emotion(txt):
     t = txt.strip()
     scores = {k: 0.0 for k in LABELS}
-    # Model 1 - GoEmotions - understands embarrassment, boredom, annoyance
     try:
         r1 = get_emo_go()(t)[0]
         for x in r1:
@@ -39,9 +36,8 @@ def predict_emotion(txt):
                 scores[lab] += float(x['score']) * 2.0
     except Exception:
         pass
-    # Model 2 - Zero-Shot - understands full meaning
     try:
-        r2 = get_emo2()(t, LABELS, hypothesis_template="The emotion expressed in this sentence is {}.")
+        r2 = get_emo2()(t, LABELS, hypothesis_template="The emotion expressed is {}.")
         for lab, sc in zip(r2['labels'], r2['scores']):
             scores[lab.lower()] += float(sc) * 2.0
     except Exception:
@@ -75,7 +71,6 @@ with tab1:
 
 with tab2:
     st.header('2b: Emotion from Speech + Text')
-    st.write('Speak LOUD - App converts to text. Then click Predict.')
     st.subheader('Step 1: Speak Here - Mic')
     audio = st.audio_input('Click mic, wait 2 sec, then speak LOUD and CLEAR:')
     if audio is not None:
@@ -119,7 +114,7 @@ with tab2:
         if not txt.strip():
             st.warning('Please speak or type first!')
         else:
-            with st.spinner('Predicting emotion... wait 30 sec first time (2 models loading)...'):
+            with st.spinner('Predicting emotion... wait 30 sec first time...'):
                 try:
                     res = predict_emotion(txt)
                     best = res[0]['label']
@@ -130,7 +125,6 @@ with tab2:
                     third_score = res[2]['pct']
                     st.success("Predicted Emotion: " + best + " (" + str(best_score) + "%)")
                     st.write("Text: " + txt)
-                    st.write("AI reason: This sentence means '" + best + "' - AI understood full meaning from 2 models.")
                     st.write('Related emotions:')
                     st.write("1. " + best + ": " + str(best_score) + "%")
                     st.write("2. " + second + ": " + str(second_score) + "%")
