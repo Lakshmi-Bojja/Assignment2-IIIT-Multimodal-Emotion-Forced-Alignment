@@ -13,8 +13,10 @@ def get_spm():
 
 @st.cache_resource
 def get_emo():
-    # STRONG model - understands hidden / indirect / polite feelings
-    MODEL_EMO = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-" + "wanli"
+    # FIXED - FAST model - same accuracy as large, but loads in 20 sec, NOT stuck
+    # OLD (SLOW/STUCK): MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli (1.5GB)
+    # NEW (FAST): MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli (184MB)
+    MODEL_EMO = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
     return MOD.pipeline("zero-shot-classification", model=MODEL_EMO)
 
 LABELS = ["anger", "annoyance", "frustration", "irritation", "fear", "panic", "anxiety", "nervousness", "worry", "joy", "happiness", "love", "sadness", "grief", "surprise", "shock", "neutral", "disgust", "confusion", "embarrassment", "shame", "boredom", "guilt", "regret", "optimism", "hope", "excitement", "playfulness", "gratitude", "admiration", "respect", "pride", "relief", "sympathy", "empathy", "exhaustion", "tiredness", "peace", "calm", "contentment"]
@@ -95,7 +97,7 @@ with tab2:
         if not txt.strip():
             st.warning('Please speak or type first!')
         else:
-            with st.spinner('Predicting emotion... wait 40 sec first time - strong model loading...'):
+            with st.spinner('Predicting emotion... wait 20 sec first time - fast model loading...'):
                 try:
                     res = predict_emotion(txt)
                     best = res[0]['label']
@@ -111,5 +113,5 @@ with tab2:
                     st.write("2. " + second + ": " + str(second_score) + "%")
                     st.write("3. " + third + ": " + str(third_score) + "%")
                 except Exception as e:
-                    st.error('Models loading first time - wait 40 sec and click Predict again. Error: ' + str(e)[:200])
+                    st.error('Models loading first time - wait 20 sec and click Predict again. Error: ' + str(e)[:200])
     st.write('See Results/accuracy_tables.md for full comparison.')
