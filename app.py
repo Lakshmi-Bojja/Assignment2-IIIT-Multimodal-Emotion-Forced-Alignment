@@ -25,6 +25,7 @@ LABELS = ["anger", "fear", "joy", "love", "sadness", "surprise", "neutral", "dis
 
 def predict_emotion(txt):
     t = txt.strip()
+    low = t.lower()
     scores = {k: 0.0 for k in LABELS}
     try:
         r2 = get_emo2()(t, LABELS, hypothesis_template="The emotion expressed in this sentence is {}.")
@@ -40,6 +41,31 @@ def predict_emotion(txt):
                 scores[lab] += float(x['score']) * 0.5
     except Exception:
         pass
+    feeling_words = ["happy","sad","angry","fear","scared","afraid","love","hate","worried","excited","nervous","hurt","pain","cry","laugh","smile","sorry","guilt","ashamed","surprised","shocked","amazing","wonderful","terrible","awful","broken","leave","left","lost","lose","mess","serious","again","smell","stink","win","won","mean"]
+    has_feeling = any(w in low for w in feeling_words)
+    is_question = t.endswith("?")
+    is_fact = (not has_feeling) and ("i " not in low and "my " not in low and "me" not in low and "am " not in low and "feel" not in low)
+    if is_fact and not is_question:
+        scores["neutral"] += 1.5
+    if is_question and has_feeling:
+        scores["neutral"] = scores["neutral"] * 0.2
+    if "smell" in low or "stink" in low or "stinks" in low or "bad smell" in low:
+        scores["disgust"] += 2.0
+        scores["neutral"] = scores["neutral"] * 0.2
+    if "love" in low:
+        scores["love"] += 2.0
+        scores["joy"] = scores["joy"] * 0.5
+    if "what does" in low or "what is this" in low or "don't understand" in low or "dont understand" in low or "what do you mean" in low:
+        scores["confusion"] += 2.0
+        scores["surprise"] = scores["surprise"] * 0.4
+        scores["neutral"] = scores["neutral"] * 0.3
+    if "leave me" in low or "left me" in low or "leaving me" in low:
+        scores["sadness"] += 2.0
+        scores["anger"] = scores["anger"] * 0.4
+    if "lose my" in low or "lost my" in low or "lost" in low and "wallet" in low:
+        scores["fear"] += 2.0
+        scores["anxiety"] += 1.5
+        scores["neutral"] = scores["neutral"] * 0.2
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     total = sum([v for _, v in ranked]) + 1e-6
     out = []
