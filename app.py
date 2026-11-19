@@ -6,29 +6,6 @@ import re
 import streamlit as st
 import pandas as pd
 
-EMOJI = {
-    "JOY": "😊",
-    "SADNESS": "😢",
-    "EXCITEMENT": "🤩",
-    "CURIOSITY": "🤔",
-    "SURPRISE": "😲",
-    "DISAPPROVAL": "😒",
-    "NEUTRAL": "😐",
-    "ANGER": "😡",
-    "FEAR": "😨",
-    "LOVE": "❤️",
-    "ADMIRATION": "😍",
-    "AMUSEMENT": "😂",
-    "CONFUSION": "😕",
-    "DISAPPOINTMENT": "😞",
-    "PRIDE": "😎",
-    "GRATITUDE": "🙏",
-    "NERVOUSNESS": "😬",
-    "RELIEF": "😌",
-    "DESIRE": "😍",
-    "OPTIMISM": "🌈"
-}
-
 st.set_page_config(page_title="Assignment 2 - Emotion + Forced Alignment", layout="wide")
 st.title("Assignment 2 - Multimodal Emotion + Forced Alignment")
 st.caption("Lakshmi Bojja | SLFI, LTRC, IIIT Hyderabad | 231fa18166@gmail.com")
@@ -55,7 +32,7 @@ def tier_to_df(tier_intervals):
 # ---------------- 2b : Emotion Model ----------------
 @st.cache_resource
 def load_emotion():
-    from 【entity-transformers¦canonical_name=transformers】 import pipeline
+    from transformers import pipeline
     clf = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None, device=-1)
     return clf
 
@@ -67,9 +44,7 @@ def predict_emotion(text):
     return top["label"], top["score"], out[:5]
 
 def show_result(label, score, top5):
-    emoji = EMOJI.get(label.upper(), "✨")
-    st.success(f"{emoji} Predicted Emotion: {label.upper()} - Confidence: {score*100:.1f}%")
-    st.markdown(f"## {emoji} {label.upper()} — {score*100:.1f}%")
+    st.success(f"Predicted Emotion: {label.upper()} - Confidence: {score*100:.1f}%")
     st.write("Top 5 predictions:")
     df = pd.DataFrame([{"Emotion": x["label"], "Score": round(x["score"]*100, 2)} for x in top5])
     st.bar_chart(df.set_index("Emotion"))
@@ -83,7 +58,7 @@ with tab1:
     st.markdown("""
     **Name:** Lakshmi Bojja
     **Method:** Montreal Forced Aligner (MFA), acoustic model english_mfa, dictionary english_us_arpa
-    **Corpus:** corpus/spk1 - 6 utterances (3 minimal-pair + 3 Hennessy)
+    **Corpus:** corpus/spk1 - 6 utterances (3 minimal-pair + 3 【entity-Hennessy¦canonical_name=Hennessy】)
     **Speaker:** spk1 (synthetic TTS voice, Windows System.Speech)
     **Command:** mfa align corpus english_us_arpa "C:/Users/Malleswari Bojja/Downloads/english_mfa/english_mfa" aligned --clean
     **Result:** 6/6 utterances aligned in 23.6 seconds. Output in aligned/spk1/ - 6 .TextGrid files.
@@ -91,7 +66,7 @@ with tab1:
     st.markdown("**Example - minimal_white_bait.TextGrid:** Word tier: \"\", \"i\", \"said\", \"white\", \"not\", \"bait\", \"\" | Phone tier: \"\", \"spn\", \"spn\", \"spn\", \"spn\", \"spn\", \"\"")
     st.markdown("**Observation:** Word boundaries are correct and match the .lab transcripts. Phone tier falls back to spn (spoken noise) because audio is synthetic TTS, not natural human speech. MFA's acoustic model was trained on human speech, so it cannot resolve phones in robotic TTS. Dictionary was not the cause - same spn result with custom dictionary.txt (144 words) and with MFA's own english_us_arpa dictionary.")
     st.markdown("**Fix for space in username:** MFA fails with [WinError 5] Access is denied when conda env is under C:/Users/Malleswari Bojja/ (space in name). Fix: conda create --prefix C:/mfa_env and conda activate C:/mfa_env, then run MFA from Admin VS Code.")
-    st.subheader("🎧 Praat Manual Check")
+    st.subheader("Praat Manual Check")
     st.markdown("""
     **File checked:** minimal_white_bait.TextGrid + minimal_white_bait.wav | **Total duration:** 2.264172 seconds
     **Word tier:** "", "i", "said", "white", "not", "bait", "" | **Phone tier:** spn, spn, spn, spn
@@ -102,7 +77,7 @@ with tab1:
         st.image("praat_check/praat_minimal_white_bait.png", caption="Praat - minimal_white_bait: Sound + TextGrid, words tier + phones tier", use_container_width=True)
     else:
         st.info("Praat photo: praat_check/praat_minimal_white_bait.png - push this file to GitHub to show it here.")
-    st.subheader("📊 View Any TextGrid")
+    st.subheader("View Any TextGrid")
     base = "aligned/spk1"
     if os.path.exists(base):
         files = sorted([f for f in os.listdir(base) if f.endswith(".TextGrid")])
@@ -132,7 +107,7 @@ with tab2:
                 label, score, top5 = predict_emotion(text)
             show_result(label, score, top5)
     st.divider()
-    st.subheader("🎤 Speak / Upload Voice")
+    st.subheader("Speak / Upload Voice")
     st.write("Record in Streamlit OR upload a .wav file. It will transcribe your voice, then predict emotion.")
     audio = st.audio_input("Record your voice:")
     uploaded = st.file_uploader("Or upload .wav / .mp3 file:", type=["wav", "mp3", "m4a", "ogg"])
