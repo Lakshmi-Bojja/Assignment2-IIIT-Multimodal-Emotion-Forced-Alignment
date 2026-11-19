@@ -26,3 +26,18 @@ Fix for space in username:
 MFA fails with [WinError 5] Access is denied when the conda env is under
 C:/Users/Malleswari Bojja/ (space in name). Fix: conda create --prefix C:/mfa_env
 and conda activate C:/mfa_env, then run MFA from Admin VS Code.
+
+## Praat Manual Check
+
+File checked: minimal_white_bait.TextGrid + minimal_white_bait.wav
+Total duration: 2.264172 seconds
+
+Word tier: "", "i", "said", "white", "not", "bait", ""
+Phone tier: spn, spn, spn, spn
+
+Observation: Word boundaries align with waveform energy bursts.
+"white" and "bait" are correctly segmented. Phone tier shows
+spn for all intervals, confirming MFA falls back to spoken-noise
+for synthetic TTS audio. No skipped words, no timing offset.
+
+Proof: praat_check/praat_minimal_white_bait.png
