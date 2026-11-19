@@ -1,9 +1,8 @@
 import os
 import importlib
-import streamlit as st
-import pandas as pd
-
-# Use importlib so copy-paste does NOT make [entity] link error
+importlib.import_module("stream" + "lit")
+st = importlib.import_module("stream" + "lit")
+pd = importlib.import_module("pan" + "das")
 _trans = importlib.import_module("trans" + "formers")
 pipeline = _trans.pipeline
 
@@ -13,12 +12,13 @@ st.write("2a: Forced Alignment (MFA) | 2b: Multimodal Emotion Prediction")
 
 @st.cache_resource
 def load_text_model():
-    # ALL 28 emotions
-    return pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None)
+    m = "Sam" + "Lowe/roberta-base-go_emotions"
+    return pipeline("text-classification", model=m, top_k=None)
 
 @st.cache_resource
-def load_whisper():
-    return pipeline("automatic-speech-recognition", model="openai/【entity-whisper¦canonical_name=Whisper】-base", chunk_length_s=30)
+def load_speech():
+    m2 = "openai/" + "whis" + "per-base"
+    return pipeline("automatic-speech-recognition", model=m2, chunk_length_s=30)
 
 text_model = load_text_model()
 
@@ -49,14 +49,11 @@ with tab1:
     st.header("2a - Forced Alignment (MFA)")
     st.write("Corpus: corpus/spk1 | Speaker: spk1 | Model: english_mfa | Dictionary: english_us_arpa")
     st.write("Result: 6/6 utterances aligned in 23.6 seconds.")
-    st.write("Minimal pairs: WHITE / BAIT, NEW / NO, BAD / BED + 3 Hennessy sentences.")
+    st.write("Minimal pairs: WHITE / BAIT, NEW / NO, BAD / BED + 3 【entity-Hennessy¦canonical_name=Hennessy】 sentences.")
     praat_path = "praat_check/praat_minimal_white_bait.png"
     if os.path.exists(praat_path):
         st.subheader("Praat Check - minimal_white_bait")
         st.image(praat_path, caption="Praat: waveform + spectrogram + words + phones (spn phones visible)")
-        st.write("Observation: Word tier shows i, said, white, not, bait. Phone tier shows spn for silence.")
-    else:
-        st.info("Praat photo not found at praat_check/praat_minimal_white_bait.png")
     st.subheader("TextGrid Viewer")
     aligned_dir = "aligned/spk1"
     if os.path.exists(aligned_dir):
@@ -85,27 +82,27 @@ with tab2:
             st.success(f"Predicted Emotion: {label} - Confidence: {conf:.1f}%")
             show_results(results)
     st.subheader("2. Voice Prediction")
-    st.write("Best way: Click Record, speak clearly for 3-5 seconds, in quiet room, phone/laptop close to mouth. Then check text - if 1 word is wrong, correct it.")
+    st.write("Best way: Click Record, speak clearly for 3-5 seconds, in quiet room, close to mouth.")
     recorded = st.audio_input("Record your voice here")
     uploaded = st.file_uploader("OR Upload audio file", type=["wav", "mp3", "m4a", "ogg"])
     audio_data = recorded if recorded is not None else uploaded
     if audio_data is not None:
         st.audio(audio_data)
         if st.button("Transcribe Voice"):
-            with st.spinner("Transcribing with 【entity-Whisper-base¦canonical_name=Whisper】... please wait 10-20 sec"):
+            with st.spinner("Transcribing... please wait 10-20 sec"):
                 try:
                     temp_path = "temp_voice.wav"
                     with open(temp_path, "wb") as f:
                         f.write(audio_data.getbuffer())
-                    【entity-whisper¦canonical_name=Whisper】 = load_whisper()
-                    out = 【entity-whisper¦canonical_name=Whisper】(temp_path, generate_kwargs={"language": "en", "task": "transcribe"})
+                    sp = load_speech()
+                    out = sp(temp_path, generate_kwargs={"language": "en", "task": "transcribe"})
                     heard_text = out["text"] if isinstance(out, dict) else out[0]["text"]
                     st.session_state["heard"] = heard_text.strip()
                     st.success("Transcribed!")
                 except Exception as e:
                     st.error(f"Voice error: {e}")
         if "heard" in st.session_state and st.session_state["heard"]:
-            st.write("【entity-Whisper¦canonical_name=Whisper】 heard:")
+            st.write("Heard:")
             fixed_text = st.text_area("If any word is wrong, correct it here, then Predict:", value=st.session_state["heard"], key="fixed_text")
             if st.button("Predict Emotion from Voice Text"):
                 if not fixed_text.strip():
