@@ -55,7 +55,7 @@ def tier_to_df(tier_intervals):
 # ---------------- 2b : Emotion Model ----------------
 @st.cache_resource
 def load_emotion():
-    from transformers import pipeline
+    from 【entity-transformers¦canonical_name=transformers】 import pipeline
     clf = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions", top_k=None, device=-1)
     return clf
 
